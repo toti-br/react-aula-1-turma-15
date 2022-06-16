@@ -10,6 +10,9 @@ export default function TaskList(props) {
           <li key={task.id} className={style.li}>
             <CardTask
               title={task.title}
+              done={task.done}
+              id={task.id}
+              toggleComplete={props.toggleComplete}
               onDelete={() => {
                 props.removeTask(task.id);
               }}
