@@ -1,117 +1,50 @@
-import { Component } from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-class OutroApp extends Component {
-  constructor() {
-    super();
-    this.state = {
-      count: 0,
-      isCounting: false,
-      intervalId: 0,
-    };
-    this.zerarAContagem = this.zerarAContagem.bind(this);
-    this.handleOnClick = this.handleOnClick.bind(this);
-  }
+import "./App.css";
 
-  handleOnClick() {
-    this.setState((oldState) => ({
-      ...oldState,
-      isCounting: !oldState.isCounting,
-    }));
-  }
-
-  zerarAContagem() {
-    this.setState((oldState) => ({
-      ...oldState,
-      count: 0,
-    }));
-  }
-
-  componentDidUpdate(prevPros, prevState) {
-    if (prevState.isCounting === this.state.isCounting) {
-      return;
-    }
-
-    if (this.state.isCounting) {
-      let intervalId = window.setInterval(() => {
-        this.setState((oldState) => ({
-          ...oldState,
-          count: oldState.count + 1,
-        }));
-      }, 1000);
-
-      this.setState((oldState) => ({
-        ...oldState,
-        intervalId: intervalId,
-      }));
-    } else {
-      window.clearInterval(this.state.intervalId);
-    }
-  }
-
-  render() {
-    let acaoDoBotao;
-
-    if (this.state.isCounting) {
-      acaoDoBotao = "Parar";
-    } else if (this.state.count > 0) {
-      acaoDoBotao = "Recomeçar";
-    } else {
-      acaoDoBotao = "Começar";
-    }
-
-    return (
-      <div style={{ textAlign: "center" }}>
-        <h1 style={{ fontSize: 30 }}>{this.state.count}</h1>
-        <button onClick={this.handleOnClick}>{acaoDoBotao} a Contagem</button>
-        <button onClick={this.zerarAContagem}>Zerar a Contagem</button>
-      </div>
-    );
-  }
-}
-
-function App() {
-  const [count, setCount] = useState(0);
-  const [isCounting, setIsCounting] = useState(false);
+export default function App() {
+  const [user, setUser] = useState();
+  const [repos, setRepos] = useState([]);
 
   useEffect(() => {
-    let intervalId;
-    if (isCounting) {
-      intervalId = window.setInterval(() => {
-        setCount((oldState) => oldState + 1);
-      }, 1000);
-    }
+    axios
+      .get("https://api.github.com/users/onathanmiranda")
+      .then((response) => {
+        setUser(response.data);
+      });
+  }, []);
 
-    return () => {
-      window.clearInterval(intervalId);
-    };
-  }, [isCounting]);
-
-  const handleOnClick = () => {
-    setIsCounting((oldState) => !oldState);
-  };
-
-  const zerarAContagem = () => {
-    setCount(0);
-  };
-
-  let acaoDoBotao;
-
-  if (isCounting) {
-    acaoDoBotao = "Parar";
-  } else if (count > 0) {
-    acaoDoBotao = "Recomeçar";
-  } else {
-    acaoDoBotao = "Começar";
-  }
+  useEffect(() => {
+    if (!user) return;
+    axios.get(user.repos_url).then((response) => {
+      setRepos(response.data);
+    });
+  }, [user]);
 
   return (
-    <div style={{ textAlign: "center" }}>
-      <h1 style={{ fontSize: 30 }}>{count}</h1>
-      <button onClick={handleOnClick}>{acaoDoBotao} a Contagem</button>
-      <button onClick={zerarAContagem}>Zerar a Contagem</button>
+    <div>
+      {user && (
+        <>
+          <img src={user.avatar_url} alt={user.name} />
+          <h1>{user.login}</h1>
+          <h2>{user.name}</h2>
+          <p>{user.company}</p>
+          <ul>
+            {repos.map((repository) => {
+              return (
+                <li key={repository.id}>
+                  <a href={repository.html_url}>
+                    <h3>{repository.name}</h3>
+                    <p>{repository.description}</p>
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+      {!user && <p>Carregando...</p>}
     </div>
   );
 }
-
-export default OutroApp;
